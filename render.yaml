@@ -4,9 +4,12 @@ services:
     name: study-moto-backend
     env: python
     rootDir: backend
-    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    buildCommand: pip install -r requirements.txt
+    preDeployCommand: alembic upgrade head
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
       - key: DATABASE_URL
         fromDatabase:
           name: study-moto-db
@@ -14,9 +17,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: '*' # Update this to your frontend URL after deployment for security
-      - key: PYTHON_VERSION
-        value: 3.11
+        value: '*'
 
   # Frontend service
   - type: web
