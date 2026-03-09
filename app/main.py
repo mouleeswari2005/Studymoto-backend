@@ -28,18 +28,26 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS middleware - must be added before other middleware
-# Ensure localhost:5173 is always allowed for development
+# CORS middleware
+# If CORS_ORIGINS is '*', we must use allow_origin_regex or remove allow_credentials
+# because allow_origins=['*'] is not allowed with allow_credentials=True
 cors_origins = settings.cors_origins_list.copy()
-if "http://localhost:5173" not in cors_origins:
-    cors_origins.append("http://localhost:5173")
-if "http://127.0.0.1:5173" not in cors_origins:
-    cors_origins.append("http://127.0.0.1:5173")
+
+# Ensure common development and production origins are always present
+for default_origin in ["http://localhost:5173", "http://127.0.0.1:5173", "https://study-moto.vercel.app"]:
+    if default_origin not in cors_origins:
+        cors_origins.append(default_origin)
+
+# Remove '*' from origins if it exists to prevent credentials error
+use_all_origins = "*" in cors_origins
+if use_all_origins:
+    cors_origins = [o for o in cors_origins if o != "*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
+    allow_origins=cors_origins if not use_all_origins else ["*"],
+    allow_origin_regex=None if not use_all_origins else "https://.*\.vercel\.app", # Allow Vercel preview URLs if * is set
+    allow_credentials=not use_all_origins, # Credentials must be False if using '*'
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"],
