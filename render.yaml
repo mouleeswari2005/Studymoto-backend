@@ -17,7 +17,7 @@ services:
         value: '*' # Update this to your frontend URL after deployment for security
 
   # Frontend service
-  - type: static
+  - type: web
     name: study-moto-frontend
     env: static
     rootDir: frontend
